@@ -1,5 +1,5 @@
 /* sw.js — offline app shell cache. Bump CACHE on each release. */
-const CACHE = 'limitless-cc-v2';
+const CACHE = 'limitless-cc-v3';
 const SHELL = [
   './',
   './index.html',
@@ -8,7 +8,10 @@ const SHELL = [
   './sync.js',
   './app.js',
   './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (e) => {
