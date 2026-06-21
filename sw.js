@@ -1,10 +1,11 @@
 /* sw.js — offline app shell cache. Bump CACHE on each release. */
-const CACHE = 'limitless-cc-v1';
+const CACHE = 'limitless-cc-v2';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './store.js',
+  './sync.js',
   './app.js',
   './manifest.json',
   './icon.svg'

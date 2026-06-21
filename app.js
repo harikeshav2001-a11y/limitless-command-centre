@@ -347,6 +347,7 @@ function onAction(e) {
     case 'quest': { const q = STORE.goals().sidequests.find(x => x.id === t.dataset.id); STORE.setQuest(t.dataset.id, q.status === 'done' ? 'active' : 'done'); renderGoals(); break; }
     case 'quest-add': { const inp = el('qinput'); if (inp && inp.value.trim()) { STORE.addQuest(inp.value.trim()); renderGoals(); } break; }
     case 'quest-del': STORE.delQuest(t.dataset.id); renderGoals(); break;
+    case 'sync': handleSync(); break;
     case 'export': doExport(); break;
     case 'import': el('importFile').click(); break;
     case 'reset': if (confirm('Reset all data? This cannot be undone.')) { STORE.reset(); activePillar = 'body'; setView('today'); } break;
@@ -356,6 +357,38 @@ function onInput(e) {
   const t = e.target.closest('[data-action]'); if (!t) return;
   if (t.dataset.action === 'symptom') STORE.setTap(TODAY(), 'body', 'symptom', t.value);
   if (t.dataset.action === 'review') STORE.setReview(t.dataset.k, t.value);
+}
+
+/* ---------- sync ---------- */
+function renderCurrent() {
+  renderHeader(); renderStats();
+  if (view === 'goals') renderGoals();
+  else if (view === 'journey') renderJourney();
+  else renderToday();
+}
+function updateSyncChip(s) {
+  const lab = el('sync-label'), dot = el('sync-dot');
+  if (!lab) return;
+  const map = { noauth: ['CONNECT', ''], idle: ['SYNC', ''], syncing: ['SYNC…', 'syncing'], ok: ['SYNCED', 'ok'], error: ['SYNC ERR', 'err'] };
+  const [t, c] = map[s] || ['SYNC', ''];
+  lab.textContent = t;
+  dot.className = 'syncdot ' + c;
+}
+async function handleSync() {
+  if (!SYNC.hasToken()) {
+    const t = prompt('Paste your sync token (fine-grained PAT with Contents read+write on the limitless-data repo):', '');
+    if (!t || !t.trim()) return;
+    SYNC.setToken(t.trim());
+  }
+  const remote = await SYNC.pull();
+  if (remote && (remote.updatedAt || 0) > (STORE.all().updatedAt || 0)) STORE.adopt(remote);
+  await SYNC.push(STORE.all());
+  renderCurrent();
+}
+async function initSync() {
+  if (!SYNC.hasToken()) return;
+  const remote = await SYNC.pull();
+  if (remote && (remote.updatedAt || 0) > (STORE.all().updatedAt || 0)) { STORE.adopt(remote); renderCurrent(); }
 }
 
 /* ---------- export / import ---------- */
@@ -381,7 +414,7 @@ function boot() {
         <div class="lbl">LIMITLESS // COMMAND CENTRE</div>
         <div class="brandrow"><span class="val" id="hd-day">DAY 01</span><span class="lbl chip" id="hd-sprint">SPRINT 01 · BODY</span></div>
       </div>
-      <div class="topright"><span class="why" id="hd-why"></span><span class="lbl live">● LIVE</span></div>
+      <div class="topright"><span class="why" id="hd-why"></span><button class="lbl syncchip" data-action="sync"><span class="syncdot" id="sync-dot"></span><span id="sync-label">SYNC</span></button><span class="lbl live">● LIVE</span></div>
     </header>
     <div class="stats" id="stats"></div>
     <main>
@@ -402,7 +435,11 @@ function boot() {
   document.addEventListener('input', onInput);
   el('importFile').addEventListener('change', onImportFile);
 
+  STORE.onSave((d) => SYNC.schedulePush(d));   // auto-push on every change (debounced)
+  SYNC.onStatus(updateSyncChip);
+
   renderToday();
+  initSync();                                  // pull newer remote state on load
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 }

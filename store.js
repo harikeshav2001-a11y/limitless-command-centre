@@ -6,6 +6,7 @@ const STORE = (() => {
 
   const DEFAULT = {
     version: 2,
+    updatedAt: 0,
     startDate: '2026-06-22',
     sprint: { number: 1, focus: 'body', weeks: 4, start: '2026-06-22' },
     settings: {
@@ -37,8 +38,13 @@ const STORE = (() => {
   }
 
   let data = load();
+  let saveCb = null;
 
-  function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
+  function save() {
+    data.updatedAt = Date.now();
+    localStorage.setItem(KEY, JSON.stringify(data));
+    if (saveCb) saveCb(data);          // notify sync layer (debounced push)
+  }
 
   function blankDay() {
     return {
@@ -76,6 +82,8 @@ const STORE = (() => {
     addQuest(label)               { data.goals.sidequests.push({ id: 'sq' + Date.now(), label, status: 'active' }); save(); },
     setQuest(id, status)          { const q = data.goals.sidequests.find(x => x.id === id); if (q) { q.status = status; save(); } },
     delQuest(id)                  { data.goals.sidequests = data.goals.sidequests.filter(x => x.id !== id); save(); },
+    onSave(cb)                    { saveCb = cb; },
+    adopt(obj)                    { data = obj; localStorage.setItem(KEY, JSON.stringify(data)); }, // from remote pull; no echo-push
     exportJSON()                  { return JSON.stringify(data, null, 2); },
     importJSON(str)               { const o = JSON.parse(str); if (o && o.days && o.version === 2) { data = o; save(); return true; } return false; },
     reset()                       { data = clone(DEFAULT); save(); }

@@ -35,6 +35,12 @@ input,textarea{font:inherit;color:var(--text);background:var(--panel2);border:1p
 .topright{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .why{font-size:12px;color:var(--dim);letter-spacing:.03em;display:none;max-width:48ch;text-align:right}
 .live{color:var(--alert)}
+.syncchip{display:flex;align-items:center;gap:6px;color:var(--dim);border:1px solid var(--line);padding:4px 8px}
+.syncchip:active{background:var(--elev)}
+.syncdot{width:7px;height:7px;border:1px solid var(--faint);border-radius:50%}
+.syncdot.ok{background:var(--text);border-color:var(--text)}
+.syncdot.syncing{background:var(--faint);border-color:var(--faint)}
+.syncdot.err{background:var(--alert);border-color:var(--alert)}
 
 /* stats */
 .stats{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)}
